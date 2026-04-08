@@ -1,82 +1,141 @@
-# [Start Bootstrap - Agency](https://startbootstrap.com/theme/agency)
+# Dockerized Website Deployment with AWS Load Balancer
 
-[Agency](https://startbootstrap.com/theme/agency) is a one page, agency portfolio theme built with [Bootstrap](https://getbootstrap.com/) created by [Start Bootstrap](https://startbootstrap.com/). This theme features several content sections, a responsive portfolio grid, modal windows for each portfolio item, and a working PHP based contact form.
+## Project Overview
 
-## Preview
+This project demonstrates how to deploy a containerized static website on multiple cloud servers and distribute traffic using a load balancer to achieve high availability and scalability.
 
-[![Agency Preview](https://assets.startbootstrap.com/img/screenshots/themes/agency.png)](https://startbootstrap.github.io/startbootstrap-agency/)
+The website is packaged using Docker and deployed on two EC2 instances. An AWS Application Load Balancer distributes incoming traffic across both servers.
 
-**[View Live Preview](https://startbootstrap.github.io/startbootstrap-agency/)**
+---
 
-## Status
+## Architecture
 
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/StartBootstrap/startbootstrap-agency/master/LICENSE)
-[![npm version](https://img.shields.io/npm/v/startbootstrap-agency.svg)](https://www.npmjs.com/package/startbootstrap-agency)
+User
+↓
+Application Load Balancer
+↓
+EC2 Instance 1 (Docker + Nginx)
+EC2 Instance 2 (Docker + Nginx)
 
-## Download and Installation
+---
 
-To begin using this template, choose one of the following options to get started:
+## Technologies Used
 
-- [Download the latest release on Start Bootstrap](https://startbootstrap.com/theme/agency)
-- Install using npm: `npm i startbootstrap-agency`
-- Clone the repo: `git clone https://github.com/StartBootstrap/startbootstrap-agency.git`
-- [Fork, Clone, or Download on GitHub](https://github.com/StartBootstrap/startbootstrap-agency)
+* AWS EC2
+* AWS Application Load Balancer
+* Docker
+* Nginx
+* GitHub
+* Linux
 
-## Usage
+---
 
-### Basic Usage
+## Project Implementation
 
-After downloading, simply edit the HTML and CSS files included with `dist` directory. These are the only files you need to worry about, you can ignore everything else! To preview the changes you make to the code, you can open the `index.html` file in your web browser.
+### 1. Launch EC2 Instances
 
-### Advanced Usage
+* Created two EC2 instances
+* Configured security groups to allow HTTP traffic (port 80)
+* Installed Docker on both servers
 
-Clone the source files of the theme and navigate into the theme's root directory. Run `npm install` and then run `npm start` which will open up a preview of the template in your default browser, watch for changes to core template files, and live reload the browser when changes are saved. You can view the `package.json` file to see which scripts are included.
+### 2. Containerize Website
 
-#### npm Scripts
+Created a Dockerfile to serve the static website using Nginx.
 
-- `npm run build` builds the project - this builds assets, HTML, JS, and CSS into `dist`
-- `npm run build:assets` copies the files in the `src/assets/` directory into `dist`
-- `npm run build:pug` compiles the Pug located in the `src/pug/` directory into `dist`
-- `npm run build:scripts` brings the `src/js/scripts.js` file into `dist`
-- `npm run build:scss` compiles the SCSS files located in the `src/scss/` directory into `dist`
-- `npm run clean` deletes the `dist` directory to prepare for rebuilding the project
-- `npm run start:debug` runs the project in debug mode
-- `npm start` or `npm run start` runs the project, launches a live preview in your default browser, and watches for changes made to files in `src`
+Dockerfile:
 
-You must have npm installed in order to use this build environment.
+```
+FROM nginx:alpine
+COPY dist/ /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
 
-### Contact Form
+This copies the website files into the Nginx web directory inside the container.
 
-The contact form available with this theme is prebuilt to use [SB Forms](https://startbootstrap.com/solution/contact-forms).
-SB Forms is a simple form solution for adding functional forms to your theme. Since this theme is prebuilt using our
-SB Forms markup, all you need to do is sign up for [SB Forms on Start Bootstrap](https://startbootstrap.com/solution/contact-forms).
+---
 
-After signing up you will need to set the domain name your form will be used on, and you will then see your
-access key. Copy this and paste it into the `data-sb-form-api-token='API_TOKEN'` data attribute in place of
-`API_TOKEN`. That's it! Your forms will be up and running!
+### 3. Build Docker Image
 
-If you aren't using SB Forms, simply delete the custom data attributes from the form, and remove the link above the
-closing `</body>` tag to SB Forms.
+```
+docker build -t agency-website .
+```
 
-## Bugs and Issues
+---
 
-Have a bug or an issue with this template? [Open a new issue](https://github.com/StartBootstrap/startbootstrap-agency/issues) here on GitHub or leave a comment on the [theme overview page at Start Bootstrap](https://startbootstrap.com/theme/agency).
+### 4. Push Image to Docker Hub
 
-## About
+```
+docker tag agency-website <dockerhub-username>/agency-website
+docker push <dockerhub-username>/agency-website
+```
 
-Start Bootstrap is an open source library of free Bootstrap themes and templates. All of the free themes and templates on Start Bootstrap are released under the MIT license, which means you can use them for any purpose, even for commercial projects.
+---
 
-- <https://startbootstrap.com>
-- <https://twitter.com/SBootstrap>
+### 5. Run Container on EC2
 
-Start Bootstrap was created by and is maintained by **[David Miller](https://davidmiller.io/)**.
+```
+docker run -d -p 80:80 <dockerhub-username>/agency-website
+```
 
-- <https://davidmiller.io>
-- <https://twitter.com/davidmillerhere>
-- <https://github.com/davidtmiller>
+The container serves the website using Nginx.
 
-Start Bootstrap is based on the [Bootstrap](https://getbootstrap.com/) framework created by [Mark Otto](https://twitter.com/mdo) and [Jacob Thorton](https://twitter.com/fat).
+---
 
-## Copyright and License
+### 6. Configure Application Load Balancer
 
-Copyright 2013-2023 Start Bootstrap LLC. Code released under the [MIT](https://github.com/StartBootstrap/startbootstrap-agency/blob/master/LICENSE) license.
+Steps performed:
+
+* Created a target group
+* Registered both EC2 instances
+* Configured HTTP listener on port 80
+* Attached the target group to the load balancer
+
+The load balancer distributes traffic between the two servers.
+
+---
+
+## Testing
+
+Access the application using the Load Balancer DNS:
+
+```
+http://<load-balancer-dns>
+```
+
+Refresh the page multiple times to confirm traffic is served by different instances.
+
+---
+
+
+Examples:
+
+* EC2 instances running
+* Docker container running
+* Load balancer configuration
+* Target group health status
+* Website output
+
+---
+
+## Key DevOps Concepts Demonstrated
+
+* Containerization using Docker
+* Reverse proxy web server using Nginx
+* Cloud infrastructure using AWS EC2
+* Load balancing for high availability
+* Multi-instance deployment
+
+---
+
+## Outcome
+
+Successfully deployed a Dockerized website on multiple EC2 instances and implemented load balancing using AWS Application Load Balancer to ensure high availability and reliability.
+
+---
+
+## Future Improvements
+
+* Add CI/CD pipeline using GitHub Actions
+* Automate deployment with Infrastructure as Code (Terraform)
+* Use Auto Scaling Group for dynamic scaling
